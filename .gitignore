@@ -1,3 +1,5 @@
 /ecs-exec-pf
 /*.gz
 /*.gz.sha1sum
+
+vendor
