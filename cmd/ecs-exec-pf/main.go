@@ -5,7 +5,7 @@ import (
 	"log"
 
 	"github.com/aws/aws-sdk-go-v2/config"
-	ecsexecpf "github.com/cuotos/ecs-exec-pf"
+	ecsexecpf "github.com/jwillanderson/ecs-exec-pf"
 	"golang.org/x/sync/errgroup"
 )
 
