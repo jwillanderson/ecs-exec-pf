@@ -1,4 +1,4 @@
-module github.com/cuotos/ecs-exec-pf
+module github.com/jwillanderson/ecs-exec-pf
 
 go 1.25.0
 
