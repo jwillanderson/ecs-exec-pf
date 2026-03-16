@@ -10,12 +10,14 @@ import (
 )
 
 type Options struct {
-	Cluster   string
-	Task      string
-	Container string
-	Port      []int
-	LocalPort []int
-	Debug     bool
+	Cluster       string
+	Task          string
+	Container     string
+	Port          []int
+	LocalPort     []int
+	Debug         bool
+	Interactive   bool
+	PortsProvided bool
 }
 
 func getVersion() string {
@@ -64,26 +66,28 @@ func parseArgsWithFlagSet(flagSet *flag.FlagSet, args []string) (*Options, error
 		return nil, fmt.Errorf("'--cluster' is required")
 	}
 
-	if opts.Task == "" {
-		return nil, fmt.Errorf("'--task' is required")
+	opts.Interactive = opts.Task == ""
+	opts.PortsProvided = len(opts.Port) > 0 || len(opts.LocalPort) > 0
+
+	if !opts.Interactive {
+		if len(opts.Port) == 0 {
+			return nil, fmt.Errorf("'--port' is required")
+		}
+		if len(opts.LocalPort) == 0 {
+			return nil, fmt.Errorf("'--local-port' is required")
+		}
 	}
 
-	if len(opts.Port) == 0 {
-		return nil, fmt.Errorf("'--port' is required")
-	}
+	if opts.PortsProvided {
+		if len(opts.Port) != len(opts.LocalPort) {
+			return nil, fmt.Errorf("for multiple ports, the local and remote port list should be the same length")
+		}
 
-	if len(opts.LocalPort) == 0 {
-		return nil, fmt.Errorf("'--local-port' is required")
-	}
-
-	if len(opts.Port) != len(opts.LocalPort) {
-		return nil, fmt.Errorf("for multiple ports, the local and remote port list should be the same length")
-	}
-
-	// make sure ports are all uint16
-	for _, p := range append(opts.Port, opts.LocalPort...) {
-		if p < 0 || p >= 65535 {
-			return nil, fmt.Errorf("ports must be between 0 and 65536")
+		// make sure ports are all uint16
+		for _, p := range append(opts.Port, opts.LocalPort...) {
+			if p < 0 || p >= 65535 {
+				return nil, fmt.Errorf("ports must be between 0 and 65536")
+			}
 		}
 	}
 

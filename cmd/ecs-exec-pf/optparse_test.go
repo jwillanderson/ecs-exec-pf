@@ -19,12 +19,13 @@ func TestParseArgs(t *testing.T) {
 			name: "valid single port mapping",
 			args: []string{"ecs-exec-pf", "-c", "my-cluster", "-t", "task123", "-n", "container1", "-p", "80", "-l", "8080"},
 			expectedOpts: &Options{
-				Cluster:   "my-cluster",
-				Task:      "task123",
-				Container: "container1",
-				Port:      []int{80},
-				LocalPort: []int{8080},
-				Debug:     false,
+				Cluster:       "my-cluster",
+				Task:          "task123",
+				Container:     "container1",
+				Port:          []int{80},
+				LocalPort:     []int{8080},
+				Debug:         false,
+				PortsProvided: true,
 			},
 			expectError: false,
 		},
@@ -32,12 +33,13 @@ func TestParseArgs(t *testing.T) {
 			name: "valid multiple port mappings",
 			args: []string{"ecs-exec-pf", "-c", "my-cluster", "-t", "task123", "-p", "80", "-l", "8080", "-p", "443", "-l", "8443"},
 			expectedOpts: &Options{
-				Cluster:   "my-cluster",
-				Task:      "task123",
-				Container: "",
-				Port:      []int{80, 443},
-				LocalPort: []int{8080, 8443},
-				Debug:     false,
+				Cluster:       "my-cluster",
+				Task:          "task123",
+				Container:     "",
+				Port:          []int{80, 443},
+				LocalPort:     []int{8080, 8443},
+				Debug:         false,
+				PortsProvided: true,
 			},
 			expectError: false,
 		},
@@ -45,12 +47,13 @@ func TestParseArgs(t *testing.T) {
 			name: "debug mode",
 			args: []string{"ecs-exec-pf", "-c", "my-cluster", "-t", "task123", "-p", "80", "-l", "8080", "-d"},
 			expectedOpts: &Options{
-				Cluster:   "my-cluster",
-				Task:      "task123",
-				Container: "",
-				Port:      []int{80},
-				LocalPort: []int{8080},
-				Debug:     true,
+				Cluster:       "my-cluster",
+				Task:          "task123",
+				Container:     "",
+				Port:          []int{80},
+				LocalPort:     []int{8080},
+				Debug:         true,
+				PortsProvided: true,
 			},
 			expectError: false,
 		},
@@ -61,10 +64,34 @@ func TestParseArgs(t *testing.T) {
 			fatalContains: "--cluster",
 		},
 		{
-			name:          "missing task",
-			args:          []string{"ecs-exec-pf", "-c", "my-cluster", "-p", "80", "-l", "8080"},
-			expectError:   true,
-			fatalContains: "--task",
+			name: "missing task enters interactive mode with ports",
+			args: []string{"ecs-exec-pf", "-c", "my-cluster", "-p", "80", "-l", "8080"},
+			expectedOpts: &Options{
+				Cluster:       "my-cluster",
+				Task:          "",
+				Container:     "",
+				Port:          []int{80},
+				LocalPort:     []int{8080},
+				Debug:         false,
+				Interactive:   true,
+				PortsProvided: true,
+			},
+			expectError: false,
+		},
+		{
+			name: "interactive mode without ports succeeds",
+			args: []string{"ecs-exec-pf", "-c", "my-cluster"},
+			expectedOpts: &Options{
+				Cluster:       "my-cluster",
+				Task:          "",
+				Container:     "",
+				Port:          []int{},
+				LocalPort:     []int{},
+				Debug:         false,
+				Interactive:   true,
+				PortsProvided: false,
+			},
+			expectError: false,
 		},
 		{
 			name:          "missing port",
@@ -117,6 +144,8 @@ func TestParseArgs(t *testing.T) {
 			assert.Equal(t, tc.expectedOpts.Port, opts.Port)
 			assert.Equal(t, tc.expectedOpts.LocalPort, opts.LocalPort)
 			assert.Equal(t, tc.expectedOpts.Debug, opts.Debug)
+			assert.Equal(t, tc.expectedOpts.Interactive, opts.Interactive)
+			assert.Equal(t, tc.expectedOpts.PortsProvided, opts.PortsProvided)
 		})
 	}
 }
